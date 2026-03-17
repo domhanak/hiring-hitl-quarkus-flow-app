@@ -40,7 +40,7 @@ public class HiringWorkflow extends Flow {
                 .workflow("hiring-process")
                 .tasks(
                         agent("cvAnalyzer", analyzerAgent::analyze, String.class)
-                                .exportAs(".task.input"),
+                                .exportAs(".task.output"),
                         emitJson("readyForHumanReview", "org.acme.hiring.review.ready", CVAnalyzerReview.class)
                                 .exportAs((Object payload, WorkflowContextData wfcd, TaskContextData tcd) -> {
                                     System.out.println(" PAYLOAD IS: " + payload);
