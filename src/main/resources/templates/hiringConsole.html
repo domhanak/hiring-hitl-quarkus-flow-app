@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hiring Review Console</title>
+    <script src="https://unpkg.com/htmx.org"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; line-height: 1.6; padding: 40px; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
+
+        .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 25px; margin-bottom: 30px; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); }
+
+        .candidate-id { font-size: 0.9rem; color: #666; margin-bottom: 10px; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; }
+
+        /* Dynamic colors based on your ReviewStatus enum names */
+        .status-HIRE { background: #e6f4ea; color: #1e8e3e; }
+        .status-REJECT { background: #fce8e6; color: #d93025; }
+        .status-NEEDS_REVISION { background: #fef7e0; color: #f9ab00; }
+
+        .reasons-box { background: #f8f9fa; border-left: 5px solid #dee2e6; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .reasons-box ul { margin: 0; padding-left: 20px; }
+
+        .actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.85; }
+        .btn-approve { background-color: #1e8e3e; color: white; }
+        .btn-deny { background-color: #d93025; color: white; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Active CV Analysis Requiring Human Review</h1>
+    <div id="dashboard">
+        {#if candidates.isEmpty}
+        <div class="card" style="text-align: center; color: #666;">
+            <p>No candidates are currently awaiting human review.</p>
+        </div>
+        {#else}
+        {#for c in candidates}
+        <div class="card" id="card-{c.candidateId}">
+            <div class="candidate-id">Reference ID: <strong>{c.candidateId}</strong></div>
+
+            <div>
+                Recommendation:
+                <span class="status-badge status-{c.reviewStatus}">
+                            {c.reviewStatus}
+                        </span>
+            </div>
+
+            <div class="reasons-box">
+                <strong>AI Justification:</strong>
+                {#if c.reasons.isEmpty}
+                <p>No specific reasons provided by the agent.</p>
+                {#else}
+                <ul>
+                    {#for reason in c.reasons}
+                    <li>{reason}</li>
+                    {/for}
+                </ul>
+                {/if}
+            </div>
+
+            <div style="margin-top: 15px;">
+                <label for="comments-{c.candidateId}" style="display:block; font-size: 0.8rem; font-weight: bold;">Reviewer Comments:</label>
+                <textarea id="comments-{c.candidateId}"
+                          name="comments"
+                          style="width: 100%; height: 60px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; padding: 8px;"
+                          placeholder="Optional: Why are you approving/denying?"></textarea>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-approve"
+                        hx-post="/console/decide/{c.candidateId}"
+                        hx-vals='{"approved": true}'
+                        hx-include="#comments-{c.candidateId}"
+                        hx-target="#card-{c.candidateId}"
+                        hx-swap="outerHTML">
+                    Confirm Analysis
+                </button>
+
+                <button class="btn btn-deny"
+                        hx-post="/console/decide/{c.candidateId}"
+                        hx-vals='{"approved": false}'
+                        hx-include="#comments-{c.candidateId}"
+                        hx-target="#card-{c.candidateId}"
+                        hx-swap="outerHTML">
+                    Reject Analysis
+                </button>
+            </div>
+        </div>
+        {/for}
+        {/if}
+    </div>
+    <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
+
+    <h2>Completed Reviews</h2>
+    <div class="history-container">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+            <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; text-align: left;">
+                <th style="padding: 12px;">Candidate</th>
+                <th style="padding: 12px;">AI Status</th>
+                <th style="padding: 12px;">Human Decision</th>
+                <th style="padding: 12px;">Reviewer Comments</th>
+                <th style="padding: 12px;">Date</th>
+            </tr>
+            </thead>
+            <tbody>
+            {#for record in history}
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 12px; font-weight: bold;">{record.candidateId}</td>
+                <td style="padding: 12px;">
+                    <span class="status-badge status-{record.aiStatus}">{record.aiStatus}</span>
+                </td>
+                <td style="padding: 12px;">
+                    {#if record.humanValidated}
+                    <span style="color: green; font-weight: bold;">✅ Approved</span>
+                    {#else}
+                    <span style="color: red; font-weight: bold;">❌ Rejected</span>
+                    {/if}
+                </td>
+                <td style="padding: 12px; font-style: italic; color: #666;">
+                    {record.humanComments ?: "N/A"}
+                </td>
+                <td style="padding: 12px; font-size: 0.85rem; color: #999;">
+                    {record.completedAt.format('yyyy-MM-dd HH:mm')}
+                </td>
+            </tr>
+            {/for}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
