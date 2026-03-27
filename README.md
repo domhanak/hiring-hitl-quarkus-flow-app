@@ -13,8 +13,16 @@ You can run your application in dev mode that enables live coding using:
 ```shell script
 ./mvnw compile quarkus:dev
 ```
-In order to trigger a new hiring review instance navigate to http://localhost:8080/q/dev/.
-and using the Quarkus Flow card, start a new workflow.
+In order to trigger a new hiring review instance navigate to http://localhost:8080/q/dev/
+and using the Quarkus Flow card, start a new workflow. You need to provide a simple json:
+```
+{
+  "candidateId": "Fero",
+  "cvData" "<Full CV text, you can copy paste whole document here>",
+  "positionRequirements": "<List of requirements for the position - consumed by LLM>"
+}
+```
+
 Alternatively you can send a POST request like this:
 ```
 TODO
