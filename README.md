@@ -1,4 +1,4 @@
-# Hiring Human In The Loop Quakrus App
+# Hiring Human In The Loop Quarkus App
 This project uses Quarkus, the Supersonic Subatomic Java Framework
 to build an application used to manage a hiring process that is using LLM Agents 
 for analysis of work items common to hiring.
