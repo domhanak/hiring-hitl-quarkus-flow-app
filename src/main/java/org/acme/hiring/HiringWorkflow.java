@@ -42,23 +42,16 @@ public class HiringWorkflow extends Flow {
                         agent("cvAnalyzer", analyzerAgent::analyze, String.class)
                                 .exportAs(".task.output"),
                         emitJson("readyForHumanReview", "org.acme.hiring.review.ready", CVAnalyzerReview.class)
-                                .exportAs((Object payload, WorkflowContextData wfcd, TaskContextData tcd) -> {
-                                    System.out.println(" PAYLOAD IS: " + payload);
-                                    System.out.println(" WorkflowContextData IS: " + wfcd);
-                                    System.out.println(" TaskContextData IS: " + tcd);
-                                    return tcd.input().as(CVAnalyzerReview.class);
-                                }, Object.class),
+                                .exportAs((Object payload, WorkflowContextData wfcd, TaskContextData tcd) -> tcd.input().as(CVAnalyzerReview.class), Object.class),
                         listen("waitHumanReview", to().one(event("org.acme.hiring.review.done")))
                                 .outputAs((Collection<Object> c) -> c.iterator().next()),
-                        // FINAL TASK: Persist the combined data
-                        withContext("persistResult", (HumanReview listenTaskOutput, WorkflowContextData wfData) -> {
-                            // 1. Fetch the AI Analysis from a previous step's output
-                            System.out.println(">>>>> WFData\n:" + wfData.context());
-
+                        withContext("persistResult",
+                                    (HumanReview listenTaskOutput, WorkflowContextData wfData) -> {
                             CVAnalyzerReview aiReview = wfData.context().as(CVAnalyzerReview.class).orElseThrow();
 
                             if (listenTaskOutput == null) {
-                                throw new IllegalStateException("Workflow state is missing data. Keys available: " + wfData.context().asMap().get().keySet());
+                                throw new IllegalStateException("Workflow state is missing data." +
+                                                                " Keys available: " + wfData.context().asMap().get().keySet());
                             }
 
                             // 2. Prepare the AI reasons for the DB (comma-separated string)
