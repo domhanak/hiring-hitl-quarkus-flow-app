@@ -4,37 +4,172 @@
     <title>Hiring Review Console</title>
     <script src="https://unpkg.com/htmx.org"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; line-height: 1.6; padding: 40px; }
-        .container { max-width: 800px; margin: auto; }
-        h1 { color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
+        /* Modern reset and base styles */
+        :root {
+            --primary: #1a73e8;
+            --primary-hover: #155db1;
+            --bg-color: #f4f6f8;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --card-bg: #ffffff;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
 
-        .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 25px; margin-bottom: 30px; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-5px); }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+            margin: 0;
+        }
 
-        .candidate-id { font-size: 0.9rem; color: #666; margin-bottom: 10px; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; }
+        /* Widened container to let the table breathe */
+        .container {
+            max-width: 1400px;
+            margin: auto;
+        }
 
-        /* Dynamic colors based on your ReviewStatus enum names */
-        .status-HIRE { background: #e6f4ea; color: #1e8e3e; }
-        .status-REJECT { background: #fce8e6; color: #d93025; }
-        .status-NEEDS_REVISION { background: #fef7e0; color: #f9ab00; }
+        h1, h2 {
+            color: #0f172a;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 24px;
+        }
 
-        .reasons-box { background: #f8f9fa; border-left: 5px solid #dee2e6; padding: 15px; margin: 20px 0; border-radius: 4px; }
-        .reasons-box ul { margin: 0; padding-left: 20px; }
+        /* CSS Grid for dynamic side-by-side cards */
+        #dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
 
-        .actions { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
-        .btn:hover { opacity: 0.85; }
-        .btn-approve { background-color: #1e8e3e; color: white; }
-        .btn-deny { background-color: #d93025; color: white; }
+        /* Refined Card Design */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+        }
+
+        .candidate-id { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .status-HIRE, .status-APPROVED { background: #dcfce7; color: #166534; }
+        .status-REJECT, .status-DENIED { background: #fee2e2; color: #991b1b; }
+        .status-NEEDS_REVISION { background: #fef9c3; color: #854d0e; }
+
+        .reasons-box {
+            background: #f8fafc;
+            border-left: 4px solid #cbd5e1;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+            flex-grow: 1;
+        }
+
+        .reasons-box ul { margin: 8px 0 0 0; padding-left: 20px; }
+
+        /* Modern Form Elements */
+        label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px; }
+        textarea {
+            width: 100%;
+            height: 70px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+        }
+
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .btn {
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-approve { background-color: var(--success); color: white; }
+        .btn-approve:hover { background-color: #059669; }
+        .btn-deny { background-color: var(--danger); color: white; }
+        .btn-deny:hover { background-color: #dc2626; }
+
+        /* Full-width Responsive Table Styling */
+        .history-container {
+            width: 100%;
+            overflow-x: auto; /* Enables horizontal scroll on very small screens */
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .history-table th {
+            background-color: #f8fafc;
+            padding: 16px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .history-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+
+        .history-table tbody tr:hover { background-color: #f1f5f9; }
+        .history-table tbody tr:last-child td { border-bottom: none; }
+
+        .empty-state { text-align: center; color: var(--text-muted); padding: 40px; grid-column: 1 / -1; }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>Active CV Analysis Requiring Human Review</h1>
+
     <div id="dashboard">
         {#if candidates.isEmpty}
-        <div class="card" style="text-align: center; color: #666;">
+        <div class="card empty-state">
             <p>No candidates are currently awaiting human review.</p>
         </div>
         {#else}
@@ -43,16 +178,16 @@
             <div class="candidate-id">Reference ID: <strong>{c.candidateId}</strong></div>
 
             <div>
-                Recommendation:
+                <span style="font-weight: 600; margin-right: 8px; font-size: 0.9rem;">Recommendation:</span>
                 <span class="status-badge status-{c.reviewStatus}">
-                            {c.reviewStatus}
-                        </span>
+                    {c.reviewStatus}
+                </span>
             </div>
 
             <div class="reasons-box">
                 <strong>AI Justification:</strong>
                 {#if c.reasons.isEmpty}
-                <p>No specific reasons provided by the agent.</p>
+                <p style="color: var(--text-muted); font-style: italic; margin-top: 4px;">No specific reasons provided by the agent.</p>
                 {#else}
                 <ul>
                     {#for reason in c.reasons}
@@ -62,12 +197,11 @@
                 {/if}
             </div>
 
-            <div style="margin-top: 15px;">
-                <label for="comments-{c.candidateId}" style="display:block; font-size: 0.8rem; font-weight: bold;">Reviewer Comments:</label>
+            <div style="margin-top: auto;">
+                <label for="comments-{c.candidateId}">Reviewer Comments:</label>
                 <textarea id="comments-{c.candidateId}"
                           name="comments"
-                          style="width: 100%; height: 60px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; padding: 8px;"
-                          placeholder="Optional: Why are you approving/denying?"></textarea>
+                          placeholder="Optional: Provide reasoning for your decision..."></textarea>
             </div>
 
             <div class="actions">
@@ -95,42 +229,41 @@
         {/for}
         {/if}
     </div>
-    <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
 
     <h2>Completed Reviews</h2>
     <div class="history-container">
-        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <table class="history-table">
             <thead>
-            <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; text-align: left;">
-                <th style="padding: 12px;">Candidate</th>
-                <th style="padding: 12px;">AI Status</th>
-                <th style="padding: 12px;">Human Decision</th>
-                <th style="padding: 12px;">Reviewer Comments</th>
-                <th style="padding: 12px;">AI Comments</th>
-                <th style="padding: 12px;">Date</th>
+            <tr>
+                <th>Candidate ID</th>
+                <th>AI Status</th>
+                <th>Human Decision</th>
+                <th>Reviewer Comments</th>
+                <th>AI Comments</th>
+                <th>Date</th>
             </tr>
             </thead>
             <tbody>
             {#for record in history}
-            <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 12px; font-weight: bold;">{record.candidateId}</td>
-                <td style="padding: 12px;">
+            <tr>
+                <td style="font-weight: 600;">{record.candidateId}</td>
+                <td>
                     <span class="status-badge status-{record.aiStatus}">{record.aiStatus}</span>
                 </td>
-                <td style="padding: 12px;">
+                <td>
                     {#if record.humanValidated}
-                    <span style="color: green; font-weight: bold;">✅ Approved</span>
+                    <span style="color: var(--success); font-weight: 700;">✅ Approved</span>
                     {#else}
-                    <span style="color: red; font-weight: bold;">❌ Rejected</span>
+                    <span style="color: var(--danger); font-weight: 700;">❌ Rejected</span>
                     {/if}
                 </td>
-                <td style="padding: 12px; font-style: italic; color: #666;">
+                <td style="font-style: italic; color: var(--text-muted);">
                     {record.humanComments ?: "N/A"}
                 </td>
-                <td style="padding: 12px; font-style: italic; color: #666;">
+                <td style="font-style: italic; color: var(--text-muted);">
                     {record.aiReasons ?: "N/A"}
                 </td>
-                <td style="padding: 12px; font-size: 0.85rem; color: #999;">
+                <td style="font-size: 0.85rem; color: var(--text-muted);">
                     {record.completedAt.format('yyyy-MM-dd HH:mm')}
                 </td>
             </tr>
