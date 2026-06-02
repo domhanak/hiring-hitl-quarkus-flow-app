@@ -21,6 +21,9 @@ public class CVAnalyzerReview {
     @JsonProperty("candidateId")
     private String candidateId;
 
+    @JsonProperty("flowinstanceid")
+    private String flowInstanceId;
+
     public CVAnalyzerReview() {
     }
 
@@ -53,12 +56,21 @@ public class CVAnalyzerReview {
         this.candidateId = candidateId;
     }
 
+    public String getFlowInstanceId() {
+        return flowInstanceId;
+    }
+
+    public void setFlowInstanceId(String flowInstanceId) {
+        this.flowInstanceId = flowInstanceId;
+    }
+
     @Override
     public String toString() {
         return "CVAnalyzerReview{" +
                 "reviewStatus=" + reviewStatus +
                 ", reasons=" + reasons +
                 ", candidateId:" + candidateId +
+                ", flowInstanceId:" + flowInstanceId +
                 '}';
     }
 
@@ -68,11 +80,14 @@ public class CVAnalyzerReview {
         if (!(o instanceof CVAnalyzerReview that)) {
             return false;
         }
-        return reviewStatus == that.reviewStatus && Objects.equals(reasons, that.reasons) && Objects.equals(candidateId, that.candidateId);
+        return reviewStatus == that.reviewStatus
+                && Objects.equals(reasons, that.reasons)
+                && Objects.equals(candidateId, that.candidateId)
+                && Objects.equals(flowInstanceId, that.flowInstanceId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(reviewStatus, reasons, candidateId);
+        return Objects.hash(reviewStatus, reasons, candidateId, flowInstanceId);
     }
 }

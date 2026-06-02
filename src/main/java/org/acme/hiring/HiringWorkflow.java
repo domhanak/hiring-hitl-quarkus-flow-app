@@ -1,21 +1,15 @@
 package org.acme.hiring;
 
-import static io.serverlessworkflow.fluent.func.dsl.FuncDSL.agent;
-import static io.serverlessworkflow.fluent.func.dsl.FuncDSL.consume;
-import static io.serverlessworkflow.fluent.func.dsl.FuncDSL.emitJson;
-import static io.serverlessworkflow.fluent.func.dsl.FuncDSL.event;
-import static io.serverlessworkflow.fluent.func.dsl.FuncDSL.function;
-import static io.serverlessworkflow.fluent.func.dsl.FuncDSL.listen;
-import static io.serverlessworkflow.fluent.func.dsl.FuncDSL.switchWhenOrElse;
-import static io.serverlessworkflow.fluent.func.dsl.FuncDSL.to;
-import static io.serverlessworkflow.fluent.func.dsl.FuncDSL.withContext;
+import java.util.Collection;
+import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static io.serverlessworkflow.fluent.func.dsl.FuncDSL.*;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import io.quarkiverse.flow.Flow;
 import io.serverlessworkflow.api.types.Workflow;
 import io.serverlessworkflow.fluent.func.FuncWorkflowBuilder;
 import io.serverlessworkflow.impl.TaskContextData;
-import io.serverlessworkflow.impl.WorkflowContext;
 import io.serverlessworkflow.impl.WorkflowContextData;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -25,8 +19,6 @@ import org.acme.hiring.domain.HumanReview;
 import org.acme.hiring.domain.ReviewStatus;
 import org.acme.hiring.domain.db.CVAnalysisResult;
 
-import java.util.Collection;
-import java.util.Map;
 
 @ApplicationScoped
 public class HiringWorkflow extends Flow {
@@ -39,12 +31,28 @@ public class HiringWorkflow extends Flow {
         return FuncWorkflowBuilder
                 .workflow("hiring-process")
                 .tasks(
+                        // Analyze the input of the hiring process - CV Data ( TODO: Update to use CVData.class )
+                        // Export the output to context
                         agent("cvAnalyzer", analyzerAgent::analyze, String.class)
-                                .exportAs(".task.output"),
+                                .exportAs((CVAnalyzerReview c) -> c),
+
+                        // Emit a JSON and export the input to workflow context CVAnalyzerReview
                         emitJson("readyForHumanReview", "org.acme.hiring.review.ready", CVAnalyzerReview.class)
-                                .exportAs((Object payload, WorkflowContextData wfcd, TaskContextData tcd) -> tcd.input().as(CVAnalyzerReview.class), Object.class),
-                        listen("waitHumanReview", to().one(event("org.acme.hiring.review.done")))
-                                .outputAs((Collection<Object> c) -> c.iterator().next()),
+                                .exportAs(
+                                        (CVAnalyzerReview payload,
+                                         WorkflowContextData wfcd,
+                                         TaskContextData tcd) ->
+                                                tcd.input().as(CVAnalyzerReview.class).orElseThrow(),
+                                        CVAnalyzerReview.class),
+
+                        // Listen for and event fired when the Human Review completes
+                        listen("waitHumanReview",
+                                        // Extend by instance ID to differentiate events
+                                        toOne(consumed("org.acme.hiring.review.done")
+                                                      .extensionByInstanceId("flowinstanceid")))
+                                        .outputAs((Collection<HumanReview> c) -> (c != null && !c.isEmpty())
+                                                ? c.iterator().next() : "{ \"human_review_error\" : \"\"}"),
+
                         withContext("persistResult",
                                     (HumanReview listenTaskOutput, WorkflowContextData wfData) -> {
                             CVAnalyzerReview aiReview = wfData.context().as(CVAnalyzerReview.class).orElseThrow();
@@ -59,7 +67,7 @@ public class HiringWorkflow extends Flow {
 
                             // 3. Create and save the entity
                             CVAnalysisResult finalRecord = new CVAnalysisResult(
-                                    listenTaskOutput.candidateId(),
+                                    listenTaskOutput.flowInstanceId(),
                                     aiReview.getReviewStatus().toString(),
                                     flattenedReasons,
                                     listenTaskOutput.status() == ReviewStatus.APPROVED,

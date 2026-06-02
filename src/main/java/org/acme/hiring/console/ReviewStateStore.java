@@ -40,7 +40,9 @@ public class ReviewStateStore {
                 CVAnalyzerReview review = mapper.treeToValue(dataNode, CVAnalyzerReview.class);
 
                 if (review != null && review.getCandidateId() != null) {
-                    System.out.println(">>> Console Logic: Captured " + review.getCandidateId());
+                    review.setFlowInstanceId(root.path("flowinstanceid").asText());
+                    System.out.println(">>>> Console Logic: Captured " + review.getCandidateId());
+                    System.out.println(">>>> Review:  " + review.toString());
                     pending.put(review.getCandidateId(), review);
                 }
             }

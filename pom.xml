@@ -43,11 +43,21 @@
     <dependency>
       <groupId>io.quarkiverse.flow</groupId>
       <artifactId>quarkus-flow</artifactId>
-      <version>0.7.0</version>
+      <version>0.9.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.flow</groupId>
+      <artifactId>quarkus-flow-durable-kubernetes</artifactId>
+      <version>0.9.0</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-messaging</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.cloudevents</groupId>
+      <artifactId>cloudevents-json-jackson</artifactId>
+      <version>4.1.0</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

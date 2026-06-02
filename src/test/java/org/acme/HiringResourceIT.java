@@ -1,4 +1,4 @@
-package org.acme;
+/*package org.acme;
 
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 
@@ -6,3 +6,4 @@ import io.quarkus.test.junit.QuarkusIntegrationTest;
 class HiringResourceIT extends HiringResourceTest {
     // Execute the same tests but in packaged mode.
 }
+*/

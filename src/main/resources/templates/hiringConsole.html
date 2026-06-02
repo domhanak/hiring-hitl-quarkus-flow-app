@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
     <title>Hiring Review Console</title>
     <script src="https://unpkg.com/htmx.org"></script>
     <style>
@@ -74,6 +73,7 @@
             <div class="actions">
                 <button class="btn btn-approve"
                         hx-post="/console/decide/{c.candidateId}"
+                        hx-headers='{"X-Flow-Instance-Id": "{c.flowInstanceId}"}'
                         hx-vals='{"approved": true}'
                         hx-include="#comments-{c.candidateId}"
                         hx-target="#card-{c.candidateId}"
@@ -83,6 +83,7 @@
 
                 <button class="btn btn-deny"
                         hx-post="/console/decide/{c.candidateId}"
+                        hx-headers='{"X-Flow-Instance-Id": "{c.flowInstanceId}"}'
                         hx-vals='{"approved": false}'
                         hx-include="#comments-{c.candidateId}"
                         hx-target="#card-{c.candidateId}"
@@ -105,6 +106,7 @@
                 <th style="padding: 12px;">AI Status</th>
                 <th style="padding: 12px;">Human Decision</th>
                 <th style="padding: 12px;">Reviewer Comments</th>
+                <th style="padding: 12px;">AI Comments</th>
                 <th style="padding: 12px;">Date</th>
             </tr>
             </thead>
@@ -124,6 +126,9 @@
                 </td>
                 <td style="padding: 12px; font-style: italic; color: #666;">
                     {record.humanComments ?: "N/A"}
+                </td>
+                <td style="padding: 12px; font-style: italic; color: #666;">
+                    {record.aiReasons ?: "N/A"}
                 </td>
                 <td style="padding: 12px; font-size: 0.85rem; color: #999;">
                     {record.completedAt.format('yyyy-MM-dd HH:mm')}
