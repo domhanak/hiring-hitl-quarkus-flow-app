@@ -23,11 +23,15 @@ and using the Quarkus Flow card, start a new workflow. You need to provide a sim
 }
 ```
 
-Alternatively you can send a POST request like this:
+Alternatively you can execute s script with example data like this:
 ```
-TODO
+./createNewHireRequests.sh 
 ```
+
 Application provides a simple Console to examine analysis of the LLM at http://localhost:8080/console
+and provide the required human review of the produced analysis.
+Use the buttons to submit or reject the AI analysis.
+Once done, the result is persisted and shown in the console.
 
 ## Packaging and running the application
 
